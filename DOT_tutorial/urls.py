@@ -2,7 +2,8 @@ from django.conf.urls import url, include
 from django.contrib.auth.models import User, Group
 from django.contrib import admin
 admin.autodiscover()
-
+from django.contrib import admin
+from DOT_tutorial.views   import ExampleView
 from rest_framework import permissions, routers, serializers, viewsets
 
 from oauth2_provider.ext.rest_framework import TokenHasReadWriteScope, TokenHasScope
@@ -46,18 +47,7 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^admin/', admin.site.urls),
+    url(r'^login/', ExampleView.as_view()),
 ]
 
 
-"""
-Q3aRJ4ohlJUa9yQX1r502JqCpzRd2W3EJwV8RFG4
-zqtupaWrpO0lg1moH6pNfQ6VGd2FEkjCbX0jluXpFImJcdDJMMc50nBFDyZJq2sbazxoQ4tVFT71h6P4DSwZeD6JTPxuYaJ4Bc4HT9lantCn2JmPcKTRxDSqu3XIZtCV
-
-
-FLzftpqgxLPEpbmlg7UjiOQku3rwEP
-A1TDQM8F8fKDzQ6pIRJVmAjqAhNHPE
-
-pNWXw8GFqiGQ2moQkhT2020hlKyL3a
-vs91qwMihRpcPSsS3bBBiGAYV6PJq3
-
-"""
