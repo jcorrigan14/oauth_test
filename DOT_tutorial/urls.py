@@ -3,7 +3,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib import admin
 admin.autodiscover()
 from django.contrib import admin
-from DOT_tutorial.views import ExampleView,userView
+from DOT_tutorial.views import *
 from rest_framework import permissions, routers, serializers, viewsets
 
 from oauth2_provider.ext.rest_framework import TokenHasReadWriteScope, TokenHasScope
@@ -49,6 +49,7 @@ urlpatterns = [
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^admin/', admin.site.urls),
     url(r'^login/', ExampleView.as_view()),
+    url(r'^logout/', logoutview.as_view()),
     url(r'^us/', userView.as_view()),
 ]
 

@@ -1,23 +1,13 @@
-import json
-
-from django.shortcuts import render
-
 # Create your views here.
 
-from rest_framework.parsers import JSONParser
+import requests
+from django.contrib.auth.models import User
+from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth.decorators import login_required
-from django.http.response import HttpResponse
-from django.contrib.auth.models import User
-from oauth2_provider.models import AccessToken,RefreshToken
-from rest_framework import permissions, routers, serializers, viewsets
-from datetime import datetime,timezone,timedelta
-from oauth2_provider.decorators import protected_resource
-import urllib.request
-import requests
-from DOT_tutorial.settings import *
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -54,22 +44,26 @@ class ExampleView(APIView):
 
         r=requests.post(url,data=payload,headers=headers)
 
-        # make sure to remove this line
-        print(r.json()["access_token"])
-
         a=r.json()
 
         return Response(a)
 
 
 
-
+#
+#
+#
 class userView(APIView):
     """
     A view that can accept POST requests with JSON content.
     """
     #parser_classes = (JSONParser,)
-
+#
+    #
+    #The post function requires a parameter i.e the user token always to run
+    # on passing the correct token this displays the user data
+    # header format is  "Authorization: Bearer <API ACCESS KEY>"
+    #
 
 
     def post(self, request):
@@ -81,3 +75,23 @@ class userView(APIView):
         return Response(serializer_class.data)
 
 
+class logoutview(APIView):
+    def post(self,request):
+        #
+        # header format is  "Authorization: Bearer <API ACCESS KEY>"
+        #Always requires a user token as a request header to enter here
+        #In this function a call to revoke this token is made.
+        #on a 200 response from the server the output is blank, so we can send anything as a response and the frontend can handle that
+        #
+
+        url = 'http://localhost:8000/o/revoke_token/'
+        headers = {'Content-Type': 'application/x-www-form-urlencoded',
+                   'Authorization': 'Basic VDZYc0NyMWlsbWNSb1dyQm03eGVtVkU5cVlNYW1pMG5sS0tCbldiMDpOeDZwVjF0R3Nuek5mc2k3WGNibWdXWWlMZk9yZEw1THM4cERwNlRiWWowdlRNQ3RxTUxVMk9yWHJQY3Z4V0Y4OW1LWExjc3lPN2JQbFIxUU9oSThmWTFJWkFwQUhtV1Z6V2xDQUw3MGZ0Yzd6TEo4UnNtUjBtWklBWkV4TUpVUA ==' }
+
+        payload='token='+request.data['access_token']
+
+        r = requests.post(url, data=payload, headers=headers)
+
+
+
+        return Response("You have logged out")
