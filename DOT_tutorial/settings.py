@@ -130,13 +130,13 @@ REST_FRAMEWORK = {
     ),
 
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     )
 }
 
 OAUTH2_PROVIDER = {
     # this is the list of available scopes and custom token settings
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 60,
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 300
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 300000
 }
