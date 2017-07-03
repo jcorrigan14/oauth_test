@@ -135,7 +135,7 @@ REST_FRAMEWORK = {
 }
 
 OAUTH2_PROVIDER = {
-    # this is the list of available scopes
+    # this is the list of available scopes and custom token settings
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
     'ACCESS_TOKEN_EXPIRE_SECONDS': 60,
     'REFRESH_TOKEN_EXPIRE_SECONDS': 300
