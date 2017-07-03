@@ -3,7 +3,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib import admin
 admin.autodiscover()
 from django.contrib import admin
-from DOT_tutorial.views import ExampleView,userView
+from DOT_tutorial.views import *
 from rest_framework import permissions, routers, serializers, viewsets
 
 from oauth2_provider.ext.rest_framework import TokenHasReadWriteScope, TokenHasScope
@@ -24,7 +24,6 @@ class GroupSerializer(serializers.ModelSerializer):
 # ViewSets define the view behavior.
 class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
-
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -49,6 +48,7 @@ urlpatterns = [
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^admin/', admin.site.urls),
     url(r'^login/', ExampleView.as_view()),
+    url(r'^logout/', logoutView.as_view()),
     url(r'^us/', userView.as_view()),
 ]
 
