@@ -89,9 +89,11 @@ class logoutview(APIView):
                    'Authorization': 'Basic VDZYc0NyMWlsbWNSb1dyQm03eGVtVkU5cVlNYW1pMG5sS0tCbldiMDpOeDZwVjF0R3Nuek5mc2k3WGNibWdXWWlMZk9yZEw1THM4cERwNlRiWWowdlRNQ3RxTUxVMk9yWHJQY3Z4V0Y4OW1LWExjc3lPN2JQbFIxUU9oSThmWTFJWkFwQUhtV1Z6V2xDQUw3MGZ0Yzd6TEo4UnNtUjBtWklBWkV4TUpVUA ==' }
 
         payload='token='+request.data['access_token']
+        payload1 = 'token=' + request.data['refresh_token']
 
         r = requests.post(url, data=payload, headers=headers)
 
-
+        r1 = requests.post(url, data=payload1, headers=headers)
 
         return Response("You have logged out")
+
