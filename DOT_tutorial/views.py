@@ -6,7 +6,7 @@ from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from oauth2_provider.models import AccessToken
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -69,11 +69,21 @@ class logoutView(APIView):
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'Basic UTNhUko0b2hsSlVhOXlRWDFyNTAySnFDcHpSZDJXM0VKd1Y4UkZHNDp6cXR1cGFXcnBPMGxnMW1vSDZwTmZRNlZHZDJGRWtqQ2JYMGpsdVhwRkltSmNkREpNTWM1MG5CRkR5WkpxMnNiYXp4b1E0dFZGVDcxaDZQNERTd1plRDZKVFB4dVlhSjRCYzRIVDlsYW50Q24ySm1QY0tUUnhEU3F1M1hJWnRDVg=='}
         payload='token='+request.data['access_token']
-        payload1 = 'token=' + request.data['refresh_token']
+        #payload1 = 'token=' + request.data['refresh_token']
 
         r = requests.post(url, data=payload, headers=headers)
+        accesstokendelete=AccessToken.delete(TOKEN=request.data['access_token'])
 
-        r1 = requests.post(url, data=payload1, headers=headers)
+
 
         return Response("You have logged out")
 
+
+
+# {
+# "access_token": "DCfddMmQW9mP2ECLulxVsUREN5zXEe",
+# "expires_in": 36000,
+# "token_type": "Bearer",
+# "scope": "read write groups",
+# "refresh_token": "IYJaa91z6lVB4Ho2d5CbtPDWhIspvi"
+# }
