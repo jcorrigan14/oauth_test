@@ -69,6 +69,11 @@ class logoutView(APIView):
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'Basic UTNhUko0b2hsSlVhOXlRWDFyNTAySnFDcHpSZDJXM0VKd1Y4UkZHNDp6cXR1cGFXcnBPMGxnMW1vSDZwTmZRNlZHZDJGRWtqQ2JYMGpsdVhwRkltSmNkREpNTWM1MG5CRkR5WkpxMnNiYXp4b1E0dFZGVDcxaDZQNERTd1plRDZKVFB4dVlhSjRCYzRIVDlsYW50Q24ySm1QY0tUUnhEU3F1M1hJWnRDVg=='}
         payload='token='+request.data['access_token']
+        payload1 = 'token=' + request.data['refresh_token']
 
         r = requests.post(url, data=payload, headers=headers)
-        return Response('Token successfully revoked')
+
+        r1 = requests.post(url, data=payload1, headers=headers)
+
+        return Response("You have logged out")
+
