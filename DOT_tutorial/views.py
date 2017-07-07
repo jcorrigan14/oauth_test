@@ -1,18 +1,17 @@
 # Create your views here.
+from base64 import b64encode
 
 import requests
-from django.contrib.auth.models import User, Group
-from oauth2_provider.decorators import protected_resource
-from oauth2_provider.views import ProtectedResourceView, ScopedProtectedResourceView, ReadWriteScopedResourceView
+from django.contrib.auth.models import User
+from guardian.shortcuts import assign_perm, get_perms
+from oauth2_provider.models import AccessToken
+from oauth2_provider.views import ReadWriteScopedResourceView
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from oauth2_provider.models import AccessToken, AbstractApplication, Application as OauthApp
-from guardian.shortcuts import assign_perm, get_perms
 
 from DOT_tutorial.models import *
-from DOT_tutorial.models import Application as My_App
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -35,9 +34,11 @@ class ExampleView(APIView):
 
     permission_classes = (AllowAny,)
     def post(self, request, format=None):
+        app = Application.objects.get(name=request.data['name'])
+
         url='http://localhost:8000/o/token/'
         headers={'Content-Type': 'application/x-www-form-urlencoded',
-                 'Authorization':'Basic UDhmZlZHUEhwNTFRVnNnSm9TS1RROHkwV0RLdHZnU0RPVXVvQ1ZSMjp0Wm0ydXl4Z1lRd25IclBJM3ZVcDJGWjlndjgwaDlhN1VDUmxJZ1VXekJLMkZUZDRpR000OWUwV3VrcWVOZ0RmbjFCcUFkV2RDY3NVc0NVajd2bXByclZ4RTY4NGVzVUZ3eFNYQXUyNERXM01icGZoTlBDODRYWmQyTHBYTk0xUA=='}
+                 'Authorization':'Basic '+ base64_client(app.client_id,app.client_secret)}
         if(request.data['grant_type']=='password'):
             payload='grant_type='+request.data['grant_type']+'&username='+request.data['username']+'&password='+request.data['password']
 
@@ -47,8 +48,6 @@ class ExampleView(APIView):
                 user = User.objects.get(username=request.data['username'])
             except:
                 return Response("User does not exist")
-
-            app=My_App.objects.get(pk=1) #TODO: MAKE SURE TO DETERMINE APPLICATION THAT THE USER IS REQUESTING ACCESS TO
 
             scopes = get_perms_as_urlencoded(user,app)
             payload += '&scope='+scopes
@@ -157,5 +156,11 @@ def get_perms_as_urlencoded(user,app):
 # Can use OAuth2 Application's instead of my own
 #
 def get_app():
-    print(OauthApp.objects.get(name='test'))
+    print(Application.objects.get(name='test'))
+
+
+def base64_client(client_id,client_secret):
+    string = client_id + ':' + client_secret
+    print(string)
+    return b64encode(string.encode('ascii')).decode('ascii')
 

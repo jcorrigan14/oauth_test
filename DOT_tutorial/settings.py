@@ -150,6 +150,8 @@ OAUTH2_PROVIDER = {
     'REFRESH_TOKEN_EXPIRE_SECONDS': 300000
 }
 
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+
 AUTHENTICATION_BACKENDS = {
     'django.contrib.auth.backends.ModelBackend', # this is default (TODO: Not sure if we need this??)
     'guardian.backends.ObjectPermissionBackend',

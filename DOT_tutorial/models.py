@@ -1,25 +1,24 @@
 from django.db import models
 from django.contrib.auth.models import Group
 
-
-class Application(models.Model):
-    name = models.CharField(max_length=100)
-
-    class Meta:
-        permissions = (
-            ('change_registration', 'Change Registration Setup'),
-            ('change_submission', 'Change Submission Setup'),
-            ('view_registration_admin', 'View Registration Admin'),
-            ('add_users', 'Add New Users'),
-            ('read', 'Read'),
-            ('write', 'write')
-        )
-
-    def __str__(self):
-        return self.name
+from oauth2_provider.models import Application
 
 
-
+# class Application(models.Model):
+#     name = models.CharField(max_length=100)
+#
+#     class Meta:
+#         permissions = (
+#             ('change_registration', 'Change Registration Setup'),
+#             ('change_submission', 'Change Submission Setup'),
+#             ('view_registration_admin', 'View Registration Admin'),
+#             ('add_users', 'Add New Users'),
+#             ('read', 'Read'),
+#             ('write', 'write')
+#         )
+#
+#     def __str__(self):
+#         return self.name
 
 
 class ApplicationGroup(models.Model):
