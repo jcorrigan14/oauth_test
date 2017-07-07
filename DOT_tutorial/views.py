@@ -34,7 +34,7 @@ class ExampleView(APIView):
 
     permission_classes = (AllowAny,)
     def post(self, request, format=None):
-        app = Application.objects.get(name=request.data['name'])
+        app = CustomApplication.objects.get(name=request.data['app_name'])
 
         url='http://localhost:8000/o/token/'
         headers={'Content-Type': 'application/x-www-form-urlencoded',
@@ -52,7 +52,6 @@ class ExampleView(APIView):
             scopes = get_perms_as_urlencoded(user,app)
             payload += '&scope='+scopes
             print(payload)
-
 
         elif(request.data['grant_type']=='refresh_token'):
 
@@ -85,9 +84,10 @@ class logoutView(APIView):
     #
 
     def post(self, request):
+        app = CustomApplication.objects.get(name=request.data['app_name'])
         url = 'http://localhost:8000/o/revoke_token/'
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
-                   'Authorization': 'Basic UTNhUko0b2hsSlVhOXlRWDFyNTAySnFDcHpSZDJXM0VKd1Y4UkZHNDp6cXR1cGFXcnBPMGxnMW1vSDZwTmZRNlZHZDJGRWtqQ2JYMGpsdVhwRkltSmNkREpNTWM1MG5CRkR5WkpxMnNiYXp4b1E0dFZGVDcxaDZQNERTd1plRDZKVFB4dVlhSjRCYzRIVDlsYW50Q24ySm1QY0tUUnhEU3F1M1hJWnRDVg=='}
+                   'Authorization': 'Basic '+ base64_client(app.client_id,app.client_secret)}
         payload='token='+request.data['access_token']
         #payload1 = 'token=' + request.data['refresh_token']
 
@@ -111,16 +111,18 @@ def roles_init_new(app):
     g2 = Group.objects.get_or_create(name='%s: Student' % app.name)[0]
 
     # ADMIN ALL GROUPS #
-    # assign_perm('change_Application', g1, app)  # change Application details
+    assign_perm('change_Application', g1, app)  # change Application details
     assign_perm('change_registration', g1, app)  # change submission settings
     assign_perm('change_submission', g1, app)  # change registration setup
     assign_perm('view_registration_admin', g1, app)  # change registration tools
     assign_perm('add_users', g1, app)  # user create functionality
     assign_perm('write', g1, app)  # write permissions
     assign_perm('read', g1, app)  # read permissions
+    assign_perm('groups', g1, app)  # groups permissions
 
     # STUDENT GROUPS #
     assign_perm('read', g2, app)  # read permissions
+    assign_perm('super_powers', g2, app)  # read permissions
 
     ApplicationGroup.objects.get_or_create(group=g1, application=app)
     ApplicationGroup.objects.get_or_create(group=g2, application=app)
@@ -146,21 +148,11 @@ def user_roles(user):
 
 def get_perms_as_urlencoded(user,app):
     a = get_perms(user,app)
-
     b = ' '.join(a)
-    print(b)
     return b
-
-
-#
-# Can use OAuth2 Application's instead of my own
-#
-def get_app():
-    print(Application.objects.get(name='test'))
 
 
 def base64_client(client_id,client_secret):
     string = client_id + ':' + client_secret
-    print(string)
     return b64encode(string.encode('ascii')).decode('ascii')
 
