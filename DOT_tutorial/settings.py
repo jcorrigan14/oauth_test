@@ -137,20 +137,25 @@ REST_FRAMEWORK = {
 
 OAUTH2_PROVIDER = {
     # this is the list of available scopes and custom token settings
-    'SCOPES': {'read': 'Read scope',
-               'write': 'Write scope',
-               'groups': 'Access to your groups',
-               'super_powers': 'Super powers',
+    'SCOPES': {
+                'read': 'Read scope',
+                'write': 'Write scope',
+                'groups': 'Access to your groups',
+                'super_powers': 'Super powers',
                 'change_registration': 'Change Registration Setup',
                 'change_submission': 'Change Submission Setup',
                 'view_registration_admin': 'View Registration Admin',
                 'add_users': 'Add New Users',
+                'add_customapplication': 'Add custom application',
+                'change_customapplication':'Change custom application',
+                'delete_customapplication': 'Delete custom application',
+                'change_Application':'Change Application',
                },
     'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
     'REFRESH_TOKEN_EXPIRE_SECONDS': 300000
 }
 
-OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'DOT_tutorial.CustomApplication'
 
 AUTHENTICATION_BACKENDS = {
     'django.contrib.auth.backends.ModelBackend', # this is default (TODO: Not sure if we need this??)
