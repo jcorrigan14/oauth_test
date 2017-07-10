@@ -126,7 +126,6 @@ class logoutView(APIView):
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'Basic '+ base64_client(app.client_id,app.client_secret)}
         payload='token='+request.data['access_token']
-        #payload1 = 'token=' + request.data['refresh_token']
 
         r = requests.post(url, data=payload, headers=headers)
         accesstokendelete=AccessToken.delete(token=request.data['access_token'])
@@ -136,19 +135,18 @@ class logoutView(APIView):
         return Response("You have logged out")
 
 class SignupView(APIView):
-    # coulda parse this data from a form but was told front end would handle that
     def post(self, request):
         username = request.data['username']
         password = request.data['password']
         group = request.data['group']
-        user = User.objects.create(username=username, password=password)
-        # add user their correct group for each Application
-        for app in CustomApplication.objects.all():
-            roles_init(app)
-            add_group = Group.objects.get(name='{}: {}'.format(app.name,group))
-            user.groups.add(add_group)
-        # what Application is the dashboard? What permissions do I grant here
-        app = CustomApplication.objects.get(name='Dashboard')
+        user = User.objects.create(username=username)
+        user.set_password(password)
+        user.save()
+
+        app = CustomApplication.objects.get(name=request.data['app_name'])
+        roles_init(app)
+        add_group = Group.objects.get(name='{}: {}'.format(app.name,group))
+        user.groups.add(add_group)
 
         url = 'http://localhost:8000/o/token/'
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
@@ -174,13 +172,10 @@ class SignupView(APIView):
 
         return Response(a)
 
+
 class Validate(APIView):
     def post(self, request):
         return Response('True')
-
-
-
-
 
 
 def roles_init(app):
