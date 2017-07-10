@@ -4,12 +4,14 @@ from base64 import b64encode
 import requests
 from django.contrib.auth.models import User
 from guardian.shortcuts import assign_perm, get_perms
-from oauth2_provider.models import AccessToken, RefreshToken
+from oauth2_provider.management.commands import cleartokens
+from oauth2_provider.models import AccessToken, RefreshToken, clear_expired
 from oauth2_provider.views import ReadWriteScopedResourceView
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from DOT_tutorial.settings import OAUTH2_PROVIDER
 
 from DOT_tutorial.models import *
 
@@ -50,19 +52,20 @@ class LoginView(APIView):
 
         scopes = get_perms_as_urlencoded(user,app)
         payload += '&scope='+scopes
-        print(payload)
-
         r=requests.post(url,data=payload,headers=headers)
         a=r.json()
-        a['user']= user.id
+        a['user']= get_user_info_as_dict(user)
+        scopes_for_list = get_perms(user, app)
+        a['scopes_list']=get_scopes_list(scopes_for_list)
+
 
         return Response(a)
 
 
 class RefreshView(APIView):
-    """
-    A view that can accept POST requests with JSON content.
-    """
+   # """
+   # A view that can accept POST requests with JSON content.
+   # """
     # parser_classes = (JSONParser,)
 
     #
@@ -74,6 +77,9 @@ class RefreshView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request, format=None):
+        # Need to call clear_expired() in order to removed expired refresh tokens from the database,
+        # Otherwise expired refresh tokens will be accepted
+        clear_expired()
         app = CustomApplication.objects.get(name=request.data['app_name'])
 
         url = 'http://localhost:8000/o/token/'
@@ -82,15 +88,15 @@ class RefreshView(APIView):
 
         payload = 'grant_type=' + request.data['grant_type'] + '&refresh_token=' + request.data['refresh_token']
         try:
-            user = RefreshToken.objects.get(token=request.data['refresh_token'])
+            user = RefreshToken.objects.get(token=request.data['refresh_token']).user
         except:
             return Response('Invalid refresh token')
         r = requests.post(url, data=payload, headers=headers)
         a = r.json()
-        print()
 
-
-        a['user'] = user.id
+        a['user'] = get_user_info_as_dict(user)
+        scopes_for_list = get_perms(user, app)
+        a['scopes_list'] = get_scopes_list(scopes_for_list)
 
         return Response(a)
 
@@ -161,6 +167,10 @@ class SignupView(APIView):
         payload += '&scope=' + scopes
         r = requests.post(url, data=payload, headers=headers)
         a = r.json()
+        a['user'] = get_user_info_as_dict(user)
+
+        scopes_for_list = get_perms(user, app)
+        a['scopes_list'] = get_scopes_list(scopes_for_list)
 
         return Response(a)
 
@@ -228,3 +238,20 @@ def get_perms_as_urlencoded(user,app):
 def base64_client(client_id,client_secret):
     string = client_id + ':' + client_secret
     return b64encode(string.encode('ascii')).decode('ascii')
+
+def get_scopes_list(scopes):
+    scopes_list = {}
+    list = OAUTH2_PROVIDER['SCOPES']
+    for elm in list:
+        is_valid = False
+        for scope in scopes:
+            if elm == scope:
+                is_valid = True
+        scopes_list[elm] = is_valid
+    return scopes_list
+
+def get_user_info_as_dict(user):
+    user_info = {}
+    user_info['id'] = user.id
+    # add more to this as needed
+    return user_info
