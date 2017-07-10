@@ -4,7 +4,7 @@ from base64 import b64encode
 import requests
 from django.contrib.auth.models import User
 from guardian.shortcuts import assign_perm, get_perms
-from oauth2_provider.models import AccessToken
+from oauth2_provider.models import AccessToken, RefreshToken
 from oauth2_provider.views import ReadWriteScopedResourceView
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
@@ -19,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
-class ExampleView(APIView):
+class LoginView(APIView):
     """
     A view that can accept POST requests with JSON content.
     """
@@ -38,28 +38,59 @@ class ExampleView(APIView):
         url='http://localhost:8000/o/token/'
         headers={'Content-Type': 'application/x-www-form-urlencoded',
                  'Authorization':'Basic '+ base64_client(app.client_id,app.client_secret)}
-        if(request.data['grant_type']=='password'):
-            payload='grant_type='+request.data['grant_type']+'&username='+request.data['username']+'&password='+request.data['password']
+        payload='grant_type='+request.data['grant_type']+'&username='+request.data['username']+'&password='+request.data['password']
 
         # check user group to assign proper scopes
             # could be get_or_404
             # could be unnecessary
-            try:
-                user = User.objects.get(username=request.data['username'])
-            except:
-                return Response("User does not exist")
+        try:
+            user = User.objects.get(username=request.data['username'])
+        except:
+            return Response("User does not exist")
 
-            scopes = get_perms_as_urlencoded(user,app)
-            payload += '&scope='+scopes
-            print(payload)
-
-        elif(request.data['grant_type']=='refresh_token'):
-
-            payload = 'grant_type=' + request.data['grant_type'] + '&refresh_token=' + request.data[
-                'refresh_token']
+        scopes = get_perms_as_urlencoded(user,app)
+        payload += '&scope='+scopes
+        print(payload)
 
         r=requests.post(url,data=payload,headers=headers)
         a=r.json()
+        a['user']= user.id
+
+        return Response(a)
+
+
+class RefreshView(APIView):
+    """
+    A view that can accept POST requests with JSON content.
+    """
+    # parser_classes = (JSONParser,)
+
+    #
+    # TODO: Accept any type of input (just XML left to handle)
+    #       - Determine format of request.data
+    #       - Properly parse and pass it as
+    #
+
+    permission_classes = (AllowAny,)
+
+    def post(self, request, format=None):
+        app = CustomApplication.objects.get(name=request.data['app_name'])
+
+        url = 'http://localhost:8000/o/token/'
+        headers = {'Content-Type': 'application/x-www-form-urlencoded',
+                   'Authorization': 'Basic ' + base64_client(app.client_id, app.client_secret)}
+
+        payload = 'grant_type=' + request.data['grant_type'] + '&refresh_token=' + request.data['refresh_token']
+        try:
+            user = RefreshToken.objects.get(token=request.data['refresh_token'])
+        except:
+            return Response('Invalid refresh token')
+        r = requests.post(url, data=payload, headers=headers)
+        a = r.json()
+        print()
+
+
+        a['user'] = user.id
 
         return Response(a)
 
@@ -100,7 +131,7 @@ class logoutView(APIView):
 
 class SignupView(APIView):
     # coulda parse this data from a form but was told front end would handle that
-    def signup(self, request):
+    def post(self, request):
         username = request.data['username']
         password = request.data['password']
         group = request.data['group']
@@ -132,6 +163,11 @@ class SignupView(APIView):
         a = r.json()
 
         return Response(a)
+
+class Validate(APIView):
+    def post(self, request):
+        return Response('True')
+
 
 
 
@@ -192,6 +228,3 @@ def get_perms_as_urlencoded(user,app):
 def base64_client(client_id,client_secret):
     string = client_id + ':' + client_secret
     return b64encode(string.encode('ascii')).decode('ascii')
-
-
-

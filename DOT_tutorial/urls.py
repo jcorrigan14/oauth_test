@@ -47,9 +47,11 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^admin/', admin.site.urls),
-    url(r'^login/', ExampleView.as_view()),
+    url(r'^login/', LoginView.as_view()),
+    url(r'^refresh/', RefreshView.as_view()),
     url(r'^logout/', logoutView.as_view()),
     url(r'^us/', userView.as_view()),
+    url(r'^valid/', Validate.as_view()),
 ]
 
 
