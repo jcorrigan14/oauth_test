@@ -99,6 +99,7 @@ class logoutView(APIView):
         return Response("You have logged out")
 
 class SignupView(APIView):
+    # coulda parse this data from a form but was told front end would handle that
     def signup(self, request):
         username = request.data['username']
         password = request.data['password']
@@ -110,6 +111,27 @@ class SignupView(APIView):
             add_group = Group.objects.get(name='{}: {}'.format(app.name,group))
             user.groups.add(add_group)
         # what Application is the dashboard? What permissions do I grant here
+        app = CustomApplication.objects.get(name='Dashboard')
+
+        url = 'http://localhost:8000/o/token/'
+        headers = {'Content-Type': 'application/x-www-form-urlencoded',
+                   'Authorization': 'Basic ' + base64_client(app.client_id, app.client_secret)}
+        payload = 'grant_type=password' + '&username=' + username + '&password=' + password
+
+            # check user group to assign proper scopes
+            # could be get_or_404
+            # could be unnecessary
+        try:
+            user = User.objects.get(username=request.data['username'])
+        except:
+            return Response("User does not exist")
+
+        scopes = get_perms_as_urlencoded(user, app)
+        payload += '&scope=' + scopes
+        r = requests.post(url, data=payload, headers=headers)
+        a = r.json()
+
+        return Response(a)
 
 
 
@@ -170,4 +192,6 @@ def get_perms_as_urlencoded(user,app):
 def base64_client(client_id,client_secret):
     string = client_id + ':' + client_secret
     return b64encode(string.encode('ascii')).decode('ascii')
+
+
 
