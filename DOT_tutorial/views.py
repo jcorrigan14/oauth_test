@@ -26,7 +26,6 @@ class ExampleView(APIView):
     #parser_classes = (JSONParser,)
 
     #
-    # TODO: Pull Client-ID and Secret from data (currently hardcoded)
     # TODO: Accept any type of input (just XML left to handle)
     #       - Determine format of request.data
     #       - Properly parse and pass it as
@@ -44,6 +43,7 @@ class ExampleView(APIView):
 
         # check user group to assign proper scopes
             # could be get_or_404
+            # could be unnecessary
             try:
                 user = User.objects.get(username=request.data['username'])
             except:
@@ -98,9 +98,24 @@ class logoutView(APIView):
 
         return Response("You have logged out")
 
-# Basic eTB1d2JyS2FWdHZ4cEJZUFBwOWZ6dDNER1lzRzdqeE0zdlNBRnk0UzpSQ21tbXRmRkFYbGJiUUFZMmVxRnBEWVJVZXc2NGR0NkNtYkdaaHF1WVlNcEx5REFmOXF2aGgwVDd4M2k4YkRYNGxHYUFoWmtxUWtmcDd4eTFScG1TRFdxZGp3Wkt4N2djZG5CaU1GUmlUMVk5bnFFT3JmUFZvRFZ1cFpwalBlRQ==
+class SignupView(APIView):
+    def signup(self, request):
+        username = request.data['username']
+        password = request.data['password']
+        group = request.data['group']
+        user = User.objects.create(username=username, password=password)
+        # add user their correct group for each Application
+        for app in CustomApplication.objects.all():
+            roles_init(app)
+            add_group = Group.objects.get(name='{}: {}'.format(app.name,group))
+            user.groups.add(add_group)
+        # what Application is the dashboard? What permissions do I grant here
 
-def roles_init_new(app):
+
+
+
+
+def roles_init(app):
     '''
     Create new groups for Admin and student and associates them with specified Applications
     Automatically appends the Application name to the Group name 
