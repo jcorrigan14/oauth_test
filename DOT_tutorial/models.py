@@ -5,6 +5,7 @@ from oauth2_provider.models import AbstractApplication, Application
 
 class CustomApplication(AbstractApplication):
     # add custom fields here
+    Persistent = models.BooleanField()
 
 
     # Some permissions are predefined and may be enough. If you want custom permissions, add them here

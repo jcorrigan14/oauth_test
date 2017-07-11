@@ -4,7 +4,6 @@ from base64 import b64encode
 import requests
 from django.contrib.auth.models import User
 from guardian.shortcuts import assign_perm, get_perms
-from oauth2_provider.management.commands import cleartokens
 from oauth2_provider.models import AccessToken, RefreshToken, clear_expired
 from oauth2_provider.views import ReadWriteScopedResourceView
 from rest_framework import serializers
@@ -34,7 +33,7 @@ class LoginView(APIView):
     #
 
     permission_classes = (AllowAny,)
-    def post(self, request, format=None):
+    def post(self, request):
         app = CustomApplication.objects.get(name=request.data['app_name'])
 
         url='http://localhost:8000/o/token/'
@@ -128,7 +127,12 @@ class logoutView(APIView):
         payload='token='+request.data['access_token']
 
         r = requests.post(url, data=payload, headers=headers)
-        accesstokendelete=AccessToken.delete(token=request.data['access_token'])
+        user = AccessToken.objects.get(token=request.data['access_token']).user
+        all_tokens = AccessToken.objects.filter(user=user)
+        print(all_tokens)
+        for token in all_tokens:
+            if token.application.persistent == False:
+                AccessToken.delete(token=token)
 
 
 
@@ -172,7 +176,7 @@ class SignupView(APIView):
 
         return Response(a)
 
-
+# simple API endpoint for frontend to check if a token is valid or not
 class Validate(APIView):
     def post(self, request):
         return Response('True')
@@ -180,10 +184,10 @@ class Validate(APIView):
 
 def roles_init(app):
     '''
-    Create new groups for Admin and student and associates them with specified Applications
-    Automatically appends the Application name to the Group name 
+    Create new groups for Admin and student and associates them with specified CustomApplications
+    Automatically appends the CustomApplication name to the Group name 
     
-    :parameter app - Application name that the Groups will be associated with
+    :parameter app - CustomApplication object that the Groups will be associated with
     '''
     g1 = Group.objects.get_or_create(name='%s: Admin' % app.name)[0]
     g2 = Group.objects.get_or_create(name='%s: Student' % app.name)[0]
@@ -200,7 +204,7 @@ def roles_init(app):
 
     # STUDENT GROUPS #
     assign_perm('read', g2, app)  # read permissions
-    assign_perm('super_powers', g2, app)  # read permissions
+    assign_perm('super_powers', g2, app)  # super powers
 
     ApplicationGroup.objects.get_or_create(group=g1, application=app)
     ApplicationGroup.objects.get_or_create(group=g2, application=app)
@@ -224,6 +228,7 @@ def user_roles(user):
 
     return {'USER_ROLES': ge_list}
 
+# formats the scopes list as needed by urlencoded data
 def get_perms_as_urlencoded(user,app):
     a = get_perms(user,app)
     b = ' '.join(a)
@@ -234,6 +239,7 @@ def base64_client(client_id,client_secret):
     string = client_id + ':' + client_secret
     return b64encode(string.encode('ascii')).decode('ascii')
 
+# generates the dictionary of all scopes to be included in token JSON
 def get_scopes_list(scopes):
     scopes_list = {}
     list = OAUTH2_PROVIDER['SCOPES']
@@ -245,6 +251,7 @@ def get_scopes_list(scopes):
         scopes_list[elm] = is_valid
     return scopes_list
 
+# generates the user info dict to be included in token JSON
 def get_user_info_as_dict(user):
     user_info = {}
     user_info['id'] = user.id
