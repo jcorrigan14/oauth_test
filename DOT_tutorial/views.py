@@ -1,4 +1,6 @@
 # Create your views here.
+import random
+import string
 from base64 import b64encode
 
 import requests
@@ -50,13 +52,25 @@ class LoginView(APIView):
         try:
             user = User.objects.get(username=request.data['username'])
         except:
-            return Response("User does not exist")
+            a={}
+            a['response']='User doest not exist'
+            a['status_code']=400
+            return Response(a)
 
         scopes = get_perms_as_urlencoded(user,app)
         payload += '&scope='+scopes
+
+        # messing around with state
+        # state = state_generator()
+        # print(state)
+        # encoded_state = b64encode(state.encode('ascii')).decode('ascii')
+        # print(encoded_state)
+        # payload += '&state=' + encoded_state
+
         r=requests.post(url,data=payload,headers=headers)
         a=r.json()
         a['user']= get_user_info_as_dict(user)
+        a['status_code']=r.status_code
         scopes_for_list = get_perms(user, app)
         a['scopes_list']=get_scopes_list(scopes_for_list)
 
@@ -289,3 +303,8 @@ class CustomApplicationUpdate(ApplicationUpdate):
 
 class CustomApplicationDetail(ApplicationDetail):
     template_name = "custom_application_detail.html"
+
+def state_generator():
+    size = 99
+    chars = string.ascii_uppercase + string.digits + string.ascii_lowercase
+    return ''.join(random.choice(chars) for _ in range(size))
