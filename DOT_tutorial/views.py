@@ -3,9 +3,11 @@ from base64 import b64encode
 
 import requests
 from django.contrib.auth.models import User
+from django.forms import modelform_factory
 from guardian.shortcuts import assign_perm, get_perms
-from oauth2_provider.models import AccessToken, RefreshToken, clear_expired
-from oauth2_provider.views import ReadWriteScopedResourceView
+from oauth2_provider.models import AccessToken, RefreshToken, clear_expired, get_application_model
+from oauth2_provider.views import ReadWriteScopedResourceView, ApplicationRegistration, ApplicationUpdate, \
+    ApplicationDetail
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -131,17 +133,15 @@ class logoutView(APIView):
         url = 'http://localhost:8000/o/revoke_token/'
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'Basic '+ base64_client(app.client_id,app.client_secret)}
-        payload='token='+request.data['access_token']
-
-        r = requests.post(url, data=payload, headers=headers)
-        user = AccessToken.objects.get(token=request.data['access_token']).user
+        my_token = AccessToken.objects.get(token=request.data['access_token'])
+        payload = 'token=' + my_token.__str__()
+        user = my_token.user
+        requests.post(url, data=payload, headers=headers)
         all_tokens = AccessToken.objects.filter(user=user)
-        print(all_tokens)
         for token in all_tokens:
             if token.application.persistent == False:
-                AccessToken.delete(token=token)
-
-
+                payload = 'token=' + token.__str__()
+                requests.post(url, data=payload, headers=headers)
 
         return Response("You have logged out")
 
@@ -264,3 +264,28 @@ def get_user_info_as_dict(user):
     user_info['id'] = user.id
     # add more to this as needed
     return user_info
+
+class CustomApplicationRegistration(ApplicationRegistration):
+    def get_form_class(self):
+        """
+        Returns the form class for the application model
+        """
+        return modelform_factory(
+            get_application_model(),
+            fields=('name', 'client_id', 'client_secret', 'client_type',
+                    'authorization_grant_type', 'redirect_uris', 'persistent')
+        )
+
+class CustomApplicationUpdate(ApplicationUpdate):
+    def get_form_class(self):
+        """
+        Returns the form class for the application model
+        """
+        return modelform_factory(
+            get_application_model(),
+            fields=('name', 'client_id', 'client_secret', 'client_type',
+                    'authorization_grant_type', 'redirect_uris', 'persistent')
+        )
+
+class CustomApplicationDetail(ApplicationDetail):
+    template_name = "custom_application_detail.html"
