@@ -11,6 +11,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from DOT_tutorial.settings import OAUTH2_PROVIDER
+from django.shortcuts import render
 
 from DOT_tutorial.models import *
 
@@ -59,6 +60,12 @@ class LoginView(APIView):
 
 
         return Response(a)
+
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+
+        return render(request, 'loginform.html', {})
 
 
 class RefreshView(APIView):
