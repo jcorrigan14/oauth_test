@@ -8,7 +8,7 @@ from guardian.shortcuts import assign_perm, get_perms
 from oauth2_provider.models import AccessToken, RefreshToken, clear_expired, get_application_model
 from oauth2_provider.views import ReadWriteScopedResourceView, ApplicationRegistration, ApplicationUpdate, \
     ApplicationDetail
-from rest_framework import serializers
+from rest_framework import serializers,status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -50,18 +50,21 @@ class LoginView(APIView):
         try:
             user = User.objects.get(username=request.data['username'])
         except:
-            return Response("User does not exist")
+            return Response("User does not exist",status=status.HTTP_404_NOT_FOUND)
 
         scopes = get_perms_as_urlencoded(user,app)
         payload += '&scope='+scopes
         r=requests.post(url,data=payload,headers=headers)
         a=r.json()
-        a['user']= get_user_info_as_dict(user)
-        scopes_for_list = get_perms(user, app)
-        a['scopes_list']=get_scopes_list(scopes_for_list)
+        if(r.status_code==200):
+            a['user']= get_user_info_as_dict(user)
+            scopes_for_list = get_perms(user, app)
+            a['scopes_list']=get_scopes_list(scopes_for_list)
 
 
-        return Response(a)
+            return Response(a,status=status.HTTP_200_OK)
+        else:
+            return Response("Not valid",status=status.HTTP_401_UNAUTHORIZED)
 
     permission_classes = (AllowAny,)
 
@@ -143,7 +146,7 @@ class logoutView(APIView):
                 payload = 'token=' + token.__str__()
                 requests.post(url, data=payload, headers=headers)
 
-        return Response("You have logged out")
+        return Response("You have logged out",status=status.HTTP_200_OK)
 
 class SignupView(APIView):
     def post(self, request):
@@ -170,7 +173,7 @@ class SignupView(APIView):
         try:
             user = User.objects.get(username=request.data['username'])
         except:
-            return Response("User does not exist")
+            return Response("User does not exist",status=status.HTTP_401_UNAUTHORIZED)
 
         scopes = get_perms_as_urlencoded(user, app)
         payload += '&scope=' + scopes
@@ -181,7 +184,7 @@ class SignupView(APIView):
         scopes_for_list = get_perms(user, app)
         a['scopes_list'] = get_scopes_list(scopes_for_list)
 
-        return Response(a)
+        return Response(a,status=status.HTTP_200_OK)
 
 # simple API endpoint for frontend to check if a token is valid or not
 class Validate(APIView):
