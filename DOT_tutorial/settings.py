@@ -151,8 +151,8 @@ OAUTH2_PROVIDER = {
                 'delete_customapplication': 'Delete custom application',
                 'change_Application':'Change Application',
                },
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 36000,
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 200,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 250,
 }
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'DOT_tutorial.CustomApplication'

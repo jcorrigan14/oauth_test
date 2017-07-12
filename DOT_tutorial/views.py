@@ -85,6 +85,7 @@ class RefreshView(APIView):
     #       - Properly parse and pass it as
     #
 
+    # Allow any makes this available to expired access tokens
     permission_classes = (AllowAny,)
 
     def post(self, request, format=None):
@@ -101,7 +102,7 @@ class RefreshView(APIView):
         try:
             user = RefreshToken.objects.get(token=request.data['refresh_token']).user
         except:
-            return Response('Invalid refresh token')
+            return Response('Invalid refresh token', status=status.HTTP_401_UNAUTHORIZED)
         r = requests.post(url, data=payload, headers=headers)
         a = r.json()
 
@@ -132,14 +133,19 @@ class logoutView(APIView):
     #
 
     def post(self, request):
+        is_mobile = False
         app = CustomApplication.objects.get(name=request.data['app_name'])
         url = 'http://localhost:8000/o/revoke_token/'
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'Basic '+ base64_client(app.client_id,app.client_secret)}
         my_token = AccessToken.objects.get(token=request.data['access_token'])
+        if my_token.persistent == True:
+            is_mobile = True
         payload = 'token=' + my_token.__str__()
         user = my_token.user
         requests.post(url, data=payload, headers=headers)
+        if is_mobile == True:
+            return Response("You have logged out", status=status.HTTP_200_OK)
         all_tokens = AccessToken.objects.filter(user=user)
         for token in all_tokens:
             if token.application.persistent == False:
