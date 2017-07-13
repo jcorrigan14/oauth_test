@@ -1,9 +1,10 @@
 README
 
-This project is an Authorization Microservice built to operate as a standalone application in a microservice
-architecture. OAuth2.0 authorization protocol is used to issue and verify access tokens for new and
-existing Users. Django Guardian is used to issue permissions to Users and Groups which will determine the scope of a
-User's access token. Access token scopes are used by other applications to restrict access to information/actions.
+This project is an Authorization Microservice built to operate as a standalone application in a
+microservice architecture. OAuth2.0 authorization protocol is used to issue and verify access
+tokens for new and existing Users. Django Guardian is used to issue permissions to Users and Groups
+which will determine the scope of a User's access token. Access token scopes are used by other
+applications to restrict access to information/actions.
 
 GETTING STARTED
 
