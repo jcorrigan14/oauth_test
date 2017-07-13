@@ -1,0 +1,22 @@
+README
+
+This project is an Authorization Microservice built to operate as a standalone application in a microservice
+architecture. OAuth2.0 authorization protocol is used to issue and verify access tokens for new and
+existing Users. Django Guardian is used to issue permissions to Users and Groups which will determine the scope of a
+User's access token. Access token scopes are used by other applications to restrict access to information/actions.
+
+GETTING STARTED
+
+These steps must be completed to begin using the service.
+
+1) Make sure requirements.txt is satisfied.
+2) Create a superuser through manage.py.
+3) Go to /admin and log in to the admin site
+3) WHILE LOGGED IN AS ADMIN, Go to /o/applications to create an application to be used with this
+    Authorization Microservice
+    IMPORTANT:
+     * If you are not logged in as admin you cannot access o/applications
+     * If you are creating a moblie application, check the "Persistent" flag to issue persistent
+       access tokens. If you are creating a web application, leave "Persistent" unchecked.
+4) Use /signup to create new Users
+5) Use /login to authenicate a User's credentials and issue an access token

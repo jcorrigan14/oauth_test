@@ -152,12 +152,12 @@ OAUTH2_PROVIDER = {
                 'change_Application':'Change Application',
                },
     'ACCESS_TOKEN_EXPIRE_SECONDS': 200,
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 250,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 300,
 }
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'DOT_tutorial.CustomApplication'
 
 AUTHENTICATION_BACKENDS = {
-    'django.contrib.auth.backends.ModelBackend', # this is default (TODO: Not sure if we need this??)
+    'django.contrib.auth.backends.ModelBackend', # this is default (TODO: Not sure if we need this?)
     'guardian.backends.ObjectPermissionBackend',
 }

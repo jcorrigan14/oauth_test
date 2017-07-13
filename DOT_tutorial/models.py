@@ -4,6 +4,9 @@ from django.contrib.auth.models import Group
 from oauth2_provider.models import AbstractApplication, Application
 
 class CustomApplication(AbstractApplication):
+    """
+    This model extends the base AbstractApplication model provided by OAuth2.0
+    """
     # add custom fields here
     persistent = models.BooleanField()
 
@@ -24,6 +27,7 @@ class CustomApplication(AbstractApplication):
 
     def __str__(self):
         return self.name
+
     def get_persistent(self):
         return self.persistent
 
@@ -33,18 +37,13 @@ class CustomApplication(AbstractApplication):
 
 
 class ApplicationGroup(models.Model):
-    '''
+    """
     This model associates a permissions group with an Application.
     Allows for easy retrieval of Group (Role Name) per Application
-    '''
+    """
     group = models.ForeignKey(Group)
     application = models.ForeignKey(CustomApplication)
-    # modified = models.DateTimeField(auto_now=True)
-    # created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.group.__str__()
-    #
-    # class Meta:
-    #     unique_together = ['group', 'event']
 

@@ -1,38 +1,51 @@
-# Create your views here.
 from base64 import b64encode
 
 import requests
+
 from django.contrib.auth.models import User
 from django.forms import modelform_factory
+from django.shortcuts import render
+
 from guardian.shortcuts import assign_perm, get_perms
 from oauth2_provider.models import AccessToken, RefreshToken, clear_expired, get_application_model
 from oauth2_provider.views import ReadWriteScopedResourceView, ApplicationRegistration, ApplicationUpdate, \
     ApplicationDetail
+
 from rest_framework import serializers,status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from DOT_tutorial.settings import OAUTH2_PROVIDER
-from django.shortcuts import render
 
+from DOT_tutorial.settings import OAUTH2_PROVIDER
 from DOT_tutorial.models import *
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
-
 class LoginView(APIView):
     """
-    A view that can accept POST requests with JSON content.
+    Login Endpoint-
+    This endpoint is passed a username, password, and app_name and then calls OAuth2 o/token. If the information
+    is valid, a new access token is issued for the User. If invalid username, returns a 404. If invalid password,
+    returns a 401.
+    
+    Utilizes a 2-legged authentication system so that POST requests with JSON and XML content can be accepted
+    in addition to the default x-www-form-urlencoded data.
+    
+    POST requests need-
+    Header:
+        Content-Type: application/<your_data_type>
+    
+    Payload:
+        grant_type : "password"
+        username : <username>
+        password : <password>
+        app_name : <application_name>  
     """
-    #parser_classes = (JSONParser,)
 
     #
     # TODO: Accept any type of input (just XML left to handle)
     #       - Determine format of request.data
     #       - Properly parse and pass it as
+    # TODO: change app_name to client secret?
     #
 
     permission_classes = (AllowAny,)
@@ -44,9 +57,6 @@ class LoginView(APIView):
                  'Authorization':'Basic '+ base64_client(app.client_id,app.client_secret)}
         payload='grant_type='+request.data['grant_type']+'&username='+request.data['username']+'&password='+request.data['password']
 
-        # check user group to assign proper scopes
-            # could be get_or_404
-            # could be unnecessary
         try:
             user = User.objects.get(username=request.data['username'])
         except:
@@ -54,43 +64,56 @@ class LoginView(APIView):
 
         scopes = get_perms_as_urlencoded(user,app)
         payload += '&scope='+scopes
-        r=requests.post(url,data=payload,headers=headers)
-        a=r.json()
-        if(r.status_code==200):
-            a['user']= get_user_info_as_dict(user)
+        response=requests.post(url,data=payload,headers=headers)
+        data=response.json()
+        if(response.status_code==200):
+            data['user']= get_user_info_as_dict(user)
             scopes_for_list = get_perms(user, app)
-            a['scopes_list']=get_scopes_list(scopes_for_list)
+            data['scopes_list']=get_scopes_list(scopes_for_list)
 
-
-            return Response(a,status=status.HTTP_200_OK)
+            return Response(data,status=status.HTTP_200_OK)
         else:
             return Response("Not valid",status=status.HTTP_401_UNAUTHORIZED)
 
     permission_classes = (AllowAny,)
 
     def get(self, request):
-
         return render(request, 'loginform.html', {})
 
 
 class RefreshView(APIView):
-   # """
-   # A view that can accept POST requests with JSON content.
-   # """
-    # parser_classes = (JSONParser,)
+    """
+    Refresh Endpoint-
+        This endpoint should be called when a request to /valid attempts to use an expired access token. 
+        This endpoint is passed a refresh token and calls OAuth2 o/token. If the refresh token is valid, 
+        a new access token is issued for the User and the old refresh token is revoked. If the refresh token
+        is invalid or expired, it returns a 401.
+    
+    Utilizes a 2-legged authentication system so that POST requests with JSON and XML content can be accepted
+    in addition to the default x-www-form-urlencoded data.
+
+    POST requests need-
+    Header:
+        Content-Type: application/<your_data_type>
+
+    Payload:
+        grant_type : "refresh_token"
+        refresh_token : <refresh_token>
+        app_name : <application_name>  
+    """
 
     #
     # TODO: Accept any type of input (just XML left to handle)
     #       - Determine format of request.data
     #       - Properly parse and pass it as
+    # TODO: change app_name to client secret?
     #
 
-    # Allow any makes this available to expired access tokens
     permission_classes = (AllowAny,)
 
     def post(self, request, format=None):
-        # Need to call clear_expired() in order to removed expired refresh tokens from the database,
-        # Otherwise expired refresh tokens will be accepted
+        # We call clear_expired() here in order to removed expired refresh tokens from the database before
+        # making the call to o/token, otherwise expired refresh tokens would be accepted
         clear_expired()
         app = CustomApplication.objects.get(name=request.data['app_name'])
 
@@ -103,21 +126,30 @@ class RefreshView(APIView):
             user = RefreshToken.objects.get(token=request.data['refresh_token']).user
         except:
             return Response('Invalid refresh token', status=status.HTTP_401_UNAUTHORIZED)
-        r = requests.post(url, data=payload, headers=headers)
-        a = r.json()
+        response = requests.post(url, data=payload, headers=headers)
+        data = response.json()
 
-        a['user'] = get_user_info_as_dict(user)
+        data['user'] = get_user_info_as_dict(user)
         scopes_for_list = get_perms(user, app)
-        a['scopes_list'] = get_scopes_list(scopes_for_list)
+        data['scopes_list'] = get_scopes_list(scopes_for_list)
 
-        return Response(a)
+        return Response(data)
 
 #
-# All views that don't specify "permission_classes = (AllowAny,)"
-# you will have to pass a valid access token in the header in x-www-form-urlencoded format to gain access
+# All views that don't specify "permission_classes = (AllowAny,)" are Authentication protected and therefore
+#  must be passed a valid access token in the header in order to grant access to the endpoint
 #       i.e. header='Authorization=Bearer <access_token>'
 #
 class userView(ReadWriteScopedResourceView, APIView):
+    """
+    User Endpoint-
+        A custom endpoint that is Authentication protected. A valid access token is required to access
+        this endpoint. For testing purposes only. 
+ 
+    POST requests need-
+    Header:
+        Authorization : "Bearer <access_token>"
+    """
     required_scopes = ['groups']
     def post(self, request):
         queryset = User.objects.all()
@@ -125,13 +157,35 @@ class userView(ReadWriteScopedResourceView, APIView):
         return Response(serializer_class.data)
 
 
-class logoutView(APIView):
-    #
-    # For JSON Data:
-    # Requires Headers {'Authorization': 'Bearer <access_token>', 'content_type': 'application/json' and
-    # payload= {"token":"<token>"}
-    #
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
 
+
+class logoutView(APIView):
+    """
+    Logout Endpoint-
+        This endpoint is called when a User logs out and calls o/revoke_token accordingly. 
+        Only mobile access tokens should be persistent. When a User logs out of a web application, 
+        their tokens for all web applications will be revoked, while mobile tokens will remain valid. 
+        If a user logs out of a mobile application, only the tokens for that specific application will be
+        revoked, while all other tokens remain valid.
+        
+    If this flow is not working as described, check the 'Persistent' setting of your app in the Application 
+    menu found at o/applications. 
+    
+    Utilizes a 2-legged authentication system so that POST requests with JSON and XML content can be accepted
+    in addition to the default x-www-form-urlencoded data.
+
+    POST requests need-
+    Header:
+        Content-Type : application/<your_data_type>
+        Authorization : Bearer <access_token>
+
+    Payload:
+       token : <token>
+    """
     def post(self, request):
         is_mobile = False
         app = CustomApplication.objects.get(name=request.data['app_name'])
@@ -155,6 +209,26 @@ class logoutView(APIView):
         return Response("You have logged out",status=status.HTTP_200_OK)
 
 class SignupView(APIView):
+    """
+    Signup Endpoint-
+    This endpoint is passed a username, password, group, and app_name. First, a new Django User is created 
+    with custom permissions based on their group. These permissions determine the scope of their access
+    token. Then, OAuth2 o/token is called to issue them an access token.
+
+    Utilizes a 2-legged authentication system so that POST requests with JSON and XML content can be accepted
+    in addition to the default x-www-form-urlencoded data.
+
+    POST requests need-
+    Header:
+        Content-Type: application/<your_data_type>
+
+    Payload:
+        username : <username>
+        password : <password>
+        app_name : <application_name>  
+        group : <group>  # for now Student or Admin
+    """
+    permission_classes = (AllowAny,)
     def post(self, request):
         username = request.data['username']
         password = request.data['password']
@@ -172,91 +246,109 @@ class SignupView(APIView):
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'Basic ' + base64_client(app.client_id, app.client_secret)}
         payload = 'grant_type=password' + '&username=' + username + '&password=' + password
-
-            # check user group to assign proper scopes
-            # could be get_or_404
-            # could be unnecessary
-        try:
-            user = User.objects.get(username=request.data['username'])
-        except:
-            return Response("User does not exist",status=status.HTTP_401_UNAUTHORIZED)
-
         scopes = get_perms_as_urlencoded(user, app)
         payload += '&scope=' + scopes
-        r = requests.post(url, data=payload, headers=headers)
-        a = r.json()
-        a['user'] = get_user_info_as_dict(user)
-
+        response = requests.post(url, data=payload, headers=headers)
+        data = response.json()
+        data['user'] = get_user_info_as_dict(user)
         scopes_for_list = get_perms(user, app)
-        a['scopes_list'] = get_scopes_list(scopes_for_list)
+        data['scopes_list'] = get_scopes_list(scopes_for_list)
 
-        return Response(a,status=status.HTTP_200_OK)
+        return Response(data,status=status.HTTP_200_OK)
 
-# simple API endpoint for frontend to check if a token is valid or not
+#
 class Validate(APIView):
+    """
+        Validate Endpoint-
+        API endpoint for frontend to check if a token is valid or not
+        
+        POST requests need-
+        Header:
+            Authorization : Bearer <access_token>
+    """
     def post(self, request):
         return Response('True')
 
 
 def roles_init(app):
-    '''
-    Create new groups for Admin and student and associates them with specified CustomApplications
+    """
+    Create new groups for Admin and Student and associates them with specified CustomApplications
     Automatically appends the CustomApplication name to the Group name 
     
     :parameter app - CustomApplication object that the Groups will be associated with
-    '''
-    g1 = Group.objects.get_or_create(name='%s: Admin' % app.name)[0]
-    g2 = Group.objects.get_or_create(name='%s: Student' % app.name)[0]
+    """
+    admin_group = Group.objects.get_or_create(name='%s: Admin' % app.name)[0]
+    student_group = Group.objects.get_or_create(name='%s: Student' % app.name)[0]
 
     # ADMIN ALL GROUPS #
-    assign_perm('change_Application', g1, app)  # change Application details
-    assign_perm('change_registration', g1, app)  # change submission settings
-    assign_perm('change_submission', g1, app)  # change registration setup
-    assign_perm('view_registration_admin', g1, app)  # change registration tools
-    assign_perm('add_users', g1, app)  # user create functionality
-    assign_perm('write', g1, app)  # write permissions
-    assign_perm('read', g1, app)  # read permissions
-    assign_perm('groups', g1, app)  # groups permissions
+    assign_perm('change_Application', admin_group, app)
+    assign_perm('change_registration', admin_group, app)
+    assign_perm('change_submission', admin_group, app)
+    assign_perm('view_registration_admin', admin_group, app)
+    assign_perm('add_users', admin_group, app)
+    assign_perm('write', admin_group, app)
+    assign_perm('read', admin_group, app)
+    assign_perm('groups', admin_group, app)
 
     # STUDENT GROUPS #
-    assign_perm('read', g2, app)  # read permissions
-    assign_perm('super_powers', g2, app)  # super powers
+    # assign_perm('read', student_group, app)
+    assign_perm('super_powers', student_group, app)
 
-    ApplicationGroup.objects.get_or_create(group=g1, application=app)
-    ApplicationGroup.objects.get_or_create(group=g2, application=app)
+    ApplicationGroup.objects.get_or_create(group=admin_group, application=app)
+    ApplicationGroup.objects.get_or_create(group=student_group, application=app)
 
     return True
 
+
 def user_roles(user):
-    '''
-    Return a list of all the user roles for every Application
-    '''
+    """
+    Return a list of all the Groups for a User for all CustomApplications
+    :param user: Django User object  
+    :return group_list: A list of Groups for the passed User
+    """
     try:
-        g = Group.objects.filter(user=user)
-        ge_list = []
+        all_groups = Group.objects.filter(user=user)
+        group_list = []
 
-        for group in g:
+        for group in all_groups:
             if ApplicationGroup.objects.filter(group=group).exists():
-                ge = ApplicationGroup.objects.get(group=group)
-                ge_list.append(ge)
+                application_group = ApplicationGroup.objects.get(group=group)
+                group_list.append(application_group)
     except:
-        ge_list = []
+        group_list = []
 
-    return {'USER_ROLES': ge_list}
+    return {'USER_GROUPS': group_list}
 
-# formats the scopes list as needed by urlencoded data
+
 def get_perms_as_urlencoded(user,app):
-    a = get_perms(user,app)
-    b = ' '.join(a)
-    return b
+    """
+    formats the scopes list as needed by urlencoded data
+    :param user: Django User object
+    :param app: CustomApplication object
+    :return: All user permissions in the formatting required by urlencoded data type
+    """
+    perms = get_perms(user,app)
+    perms_formatted = ' '.join(perms)
+    return perms_formatted
 
 
 def base64_client(client_id,client_secret):
+    """
+    Base64 encodes the client ID and client secret at runtime for Authorization header
+    :param client_id 
+    :param client_secret 
+    :return: formatted string
+    """
     string = client_id + ':' + client_secret
     return b64encode(string.encode('ascii')).decode('ascii')
 
-# generates the dictionary of all scopes to be included in token JSON
+
 def get_scopes_list(scopes):
+    """
+    Generates the dictionary of all scopes to be included in the custom access token response JSON
+    :param scopes: list of all possible scoped 
+    :return: formatted dict of scopes stating True/False for each
+    """
     scopes_list = {}
     list = OAUTH2_PROVIDER['SCOPES']
     for elm in list:
@@ -267,8 +359,13 @@ def get_scopes_list(scopes):
         scopes_list[elm] = is_valid
     return scopes_list
 
-# generates the user info dict to be included in token JSON
+
 def get_user_info_as_dict(user):
+    """
+    Generates the user info dict to be included in token JSON
+    :param user: Django User object 
+    :return: a dict of user information to be used by frontend
+    """
     user_info = {}
     user_info['id'] = user.id
     # add more to this as needed
@@ -277,7 +374,7 @@ def get_user_info_as_dict(user):
 class CustomApplicationRegistration(ApplicationRegistration):
     def get_form_class(self):
         """
-        Returns the form class for the application model
+        Extends the ApplicationRegistration page to include Persistent field
         """
         return modelform_factory(
             get_application_model(),
@@ -288,7 +385,7 @@ class CustomApplicationRegistration(ApplicationRegistration):
 class CustomApplicationUpdate(ApplicationUpdate):
     def get_form_class(self):
         """
-        Returns the form class for the application model
+        Extends the ApplicationUpdate page to include Persistent field
         """
         return modelform_factory(
             get_application_model(),
@@ -297,4 +394,7 @@ class CustomApplicationUpdate(ApplicationUpdate):
         )
 
 class CustomApplicationDetail(ApplicationDetail):
+    """
+    Points the ApplicationDetail page to custom html that includes Persistent field
+    """
     template_name = "custom_application_detail.html"
