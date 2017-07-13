@@ -4,8 +4,6 @@ admin.autodiscover()
 from django.contrib import admin
 from DOT_tutorial.views import *
 
-# Wire up our API using automatic URL routing.
-# Additionally, we include login URLs for the browseable API.
 urlpatterns = [
     url(r'^o/applications/register/', CustomApplicationRegistration.as_view()),
     url(r'^o/applications/(?P<pk>[\w-]+)/update/$', CustomApplicationUpdate.as_view(), name="update"),
