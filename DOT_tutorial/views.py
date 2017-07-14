@@ -75,8 +75,6 @@ class LoginView(APIView):
         else:
             return Response("Not valid",status=status.HTTP_401_UNAUTHORIZED)
 
-    permission_classes = (AllowAny,)
-
     def get(self, request):
         return render(request, 'loginform.html', {})
 
@@ -156,7 +154,7 @@ class userView(ReadWriteScopedResourceView, APIView):
         serializer_class = UserSerializer(queryset,many=True)
         return Response(serializer_class.data)
 
-
+# used just for testing with userView
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -166,11 +164,10 @@ class UserSerializer(serializers.ModelSerializer):
 class logoutView(APIView):
     """
     Logout Endpoint-
-        This endpoint is called when a User logs out and calls o/revoke_token accordingly. 
-        Only mobile access tokens should be persistent. When a User logs out of a web application, 
-        their tokens for all web applications will be revoked, while mobile tokens will remain valid. 
-        If a user logs out of a mobile application, only the tokens for that specific application will be
-        revoked, while all other tokens remain valid.
+        This endpoint calls o/revoke_token. Only mobile access tokens should be persistent. 
+        When a User logs out of a web application, their tokens for all web applications will be revoked, 
+        while mobile tokens will remain valid. If a user logs out of a mobile application, only the tokens
+        for that specific application will be revoked, while all other tokens remain valid.
         
     If this flow is not working as described, check the 'Persistent' setting of your app in the Application 
     menu found at o/applications. 
@@ -186,23 +183,22 @@ class logoutView(APIView):
     Payload:
        token : <token>
     """
+    # TODO: this script will revoke a token from a differnt app than the app_name provided.
+    #  Should we check this?s
     def post(self, request):
-        is_mobile = False
         app = CustomApplication.objects.get(name=request.data['app_name'])
         url = 'http://localhost:8000/o/revoke_token/'
         headers = {'Content-Type': 'application/x-www-form-urlencoded',
                    'Authorization': 'Basic '+ base64_client(app.client_id,app.client_secret)}
         my_token = AccessToken.objects.get(token=request.data['access_token'])
-        if my_token.persistent == True:
-            is_mobile = True
         payload = 'token=' + my_token.__str__()
         user = my_token.user
         requests.post(url, data=payload, headers=headers)
-        if is_mobile == True:
-            return Response("You have logged out", status=status.HTTP_200_OK)
+        if my_token.application.persistent:
+            return Response("You have logged", status=status.HTTP_200_OK)
         all_tokens = AccessToken.objects.filter(user=user)
         for token in all_tokens:
-            if token.application.persistent == False:
+            if not token.application.persistent:
                 payload = 'token=' + token.__str__()
                 requests.post(url, data=payload, headers=headers)
 
@@ -260,7 +256,7 @@ class SignupView(APIView):
 class Validate(APIView):
     """
         Validate Endpoint-
-        API endpoint for frontend to check if a token is valid or not
+        A simple API endpoint for frontend to check if a token is valid or not
         
         POST requests need-
         Header:

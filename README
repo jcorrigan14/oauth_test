@@ -21,3 +21,8 @@ These steps must be completed to begin using the service.
        access tokens. If you are creating a web application, leave "Persistent" unchecked.
 4) Use /signup to create new Users
 5) Use /login to authenicate a User's credentials and issue an access token
+
+
+TODO:
+A bad 'app_name' passed in the payload throws a 500 error. Should we handle this in a try/catch,
+or expect that devs will pass properly

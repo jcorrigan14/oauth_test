@@ -1,7 +1,8 @@
 from django.conf.urls import url, include
 from django.contrib import admin
+
 admin.autodiscover()
-from django.contrib import admin
+
 from DOT_tutorial.views import *
 
 urlpatterns = [
