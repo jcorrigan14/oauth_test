@@ -11,8 +11,7 @@ GETTING STARTED
 These steps must be completed to begin using the service.
 
 1) Make sure requirements.txt is satisfied.
-2) Create a superuser through manage.py.
-3) Go to /admin and log in to the admin site
+2) Go to /admin and log in to the admin site (ask nicely for login info)
 3) WHILE LOGGED IN AS ADMIN, Go to /o/applications to create an application to be used with this
     Authorization Microservice
     IMPORTANT:
