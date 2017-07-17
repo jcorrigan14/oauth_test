@@ -49,6 +49,7 @@ class LoginView(APIView):
     #
 
     permission_classes = (AllowAny,)
+
     def post(self, request):
         app = CustomApplication.objects.get(name=request.data['app_name'])
 
@@ -169,8 +170,8 @@ class logoutView(APIView):
         while mobile tokens will remain valid. If a user logs out of a mobile application, only the tokens
         for that specific application will be revoked, while all other tokens remain valid.
         
-    If this flow is not working as described, check the 'Persistent' setting of your app in the Application 
-    menu found at o/applications. 
+    If this flow is not working as described, check the 'Mobile Applicaiton' setting of your app in 
+    the Application menu found at o/applications. 
     
     Utilizes a 2-legged authentication system so that POST requests with JSON and XML content can be accepted
     in addition to the default x-www-form-urlencoded data.
@@ -184,7 +185,7 @@ class logoutView(APIView):
        token : <token>
     """
     # TODO: this script will revoke a token from a differnt app than the app_name provided.
-    #  Should we check this?s
+    #  Should we prevent this?
     def post(self, request):
         app = CustomApplication.objects.get(name=request.data['app_name'])
         url = 'http://localhost:8000/o/revoke_token/'
@@ -222,7 +223,7 @@ class SignupView(APIView):
         username : <username>
         password : <password>
         app_name : <application_name>  
-        group : <group>  # for now Student or Admin
+        group :    <group>  # for now Student or Admin
     """
     permission_classes = (AllowAny,)
     def post(self, request):
@@ -268,7 +269,7 @@ class Validate(APIView):
 
 def roles_init(app):
     """
-    Create new groups for Admin and Student and associates them with specified CustomApplications
+    Create new groups for Admin and Student and associates them with specified CustomApplications.
     Automatically appends the CustomApplication name to the Group name 
     
     :parameter app - CustomApplication object that the Groups will be associated with
@@ -290,35 +291,12 @@ def roles_init(app):
     # assign_perm('read', student_group, app)
     assign_perm('super_powers', student_group, app)
 
-    ApplicationGroup.objects.get_or_create(group=admin_group, application=app)
-    ApplicationGroup.objects.get_or_create(group=student_group, application=app)
-
     return True
-
-
-def user_roles(user):
-    """
-    Return a list of all the Groups for a User for all CustomApplications
-    :param user: Django User object  
-    :return group_list: A list of Groups for the passed User
-    """
-    try:
-        all_groups = Group.objects.filter(user=user)
-        group_list = []
-
-        for group in all_groups:
-            if ApplicationGroup.objects.filter(group=group).exists():
-                application_group = ApplicationGroup.objects.get(group=group)
-                group_list.append(application_group)
-    except:
-        group_list = []
-
-    return {'USER_GROUPS': group_list}
 
 
 def get_perms_as_urlencoded(user,app):
     """
-    formats the scopes list as needed by urlencoded data
+    Formats the scopes list as needed for urlencoded data
     :param user: Django User object
     :param app: CustomApplication object
     :return: All user permissions in the formatting required by urlencoded data type

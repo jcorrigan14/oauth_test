@@ -10,16 +10,17 @@ GETTING STARTED
 
 These steps must be completed to begin using the service.
 
-1) Make sure requirements.txt is satisfied.
-2) Go to /admin and log in to the admin site (ask nicely for login info)
-3) WHILE LOGGED IN AS ADMIN, Go to /o/applications to create an application to be used with this
-    Authorization Microservice
+1) Go to /admin and login to the admin site (ask nicely for login info)
+2) While logged in as admin, go to /o/applications to create an application to be used with this
+    Authorization Microservice. Be sure to select the following fields...
+        - Client type: Confidential
+        - Authorization grant type: Resource owner password-based
     IMPORTANT:
      * If you are not logged in as admin you cannot access o/applications
-     * If you are creating a moblie application, check the "Persistent" flag to issue persistent
-       access tokens. If you are creating a web application, leave "Persistent" unchecked.
-4) Use /signup to create new Users
-5) Use /login to authenicate a User's credentials and issue an access token
+     * If you are creating a moblie application, check the "Mobile Application" flag to issue persistent
+       access tokens. If you are creating a web application, leave this unchecked.
+3) Use /signup to create new Users
+4) Use /login to authenicate a User's credentials and issue an access token
 
 
 TODO:

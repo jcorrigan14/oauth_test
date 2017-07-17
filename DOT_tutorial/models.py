@@ -8,7 +8,7 @@ class CustomApplication(AbstractApplication):
     This model extends the base AbstractApplication model provided by OAuth2.0
     """
     # add custom fields here
-    persistent = models.BooleanField()
+    persistent = models.BooleanField(verbose_name='Mobile Application')
 
 
     # Some permissions are predefined and may be enough. If you want custom permissions, add them here
@@ -30,20 +30,4 @@ class CustomApplication(AbstractApplication):
 
     def get_persistent(self):
         return self.persistent
-
-
-
-
-
-
-class ApplicationGroup(models.Model):
-    """
-    This model associates a permissions group with an Application.
-    Allows for easy retrieval of Group (Role Name) per Application
-    """
-    group = models.ForeignKey(Group)
-    application = models.ForeignKey(CustomApplication)
-
-    def __str__(self):
-        return self.group.__str__()
 
