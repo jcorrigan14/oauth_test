@@ -6,9 +6,12 @@ admin.autodiscover()
 from DOT_tutorial.views import *
 
 urlpatterns = [
+    url(r'^docs/', include('rest_framework_docs.urls')),
+    url(r'^o/applications/$', CustomApplicationList.as_view()),
     url(r'^o/applications/register/', CustomApplicationRegistration.as_view()),
     url(r'^o/applications/(?P<pk>[\w-]+)/update/$', CustomApplicationUpdate.as_view(), name="update"),
     url(r'^o/applications/(?P<pk>[\w-]+)/$', CustomApplicationDetail.as_view(), name="detail"),
+    url(r'^o/applications/register/$', CustomApplicationRegistration.as_view(), name="register"),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^admin/', admin.site.urls),
     url(r'^login/', LoginView.as_view()),

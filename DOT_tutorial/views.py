@@ -2,14 +2,14 @@ from base64 import b64encode
 
 import requests
 
-from django.contrib.auth.models import User
+
 from django.forms import modelform_factory
 from django.shortcuts import render
 
 from guardian.shortcuts import assign_perm, get_perms
 from oauth2_provider.models import AccessToken, RefreshToken, clear_expired, get_application_model
 from oauth2_provider.views import ReadWriteScopedResourceView, ApplicationRegistration, ApplicationUpdate, \
-    ApplicationDetail
+    ApplicationDetail, ApplicationList
 
 from rest_framework import serializers,status
 from rest_framework.permissions import AllowAny
@@ -228,9 +228,11 @@ class SignupView(APIView):
     permission_classes = (AllowAny,)
     def post(self, request):
         username = request.data['username']
+        user, created = User.objects.get_or_create(username=username)
+        if not created:
+            return Response("User already exists", status=status.HTTP_403_FORBIDDEN)
         password = request.data['password']
         group = request.data['group']
-        user = User.objects.create(username=username)
         user.set_password(password)
         user.save()
 
@@ -257,7 +259,8 @@ class SignupView(APIView):
 class Validate(APIView):
     """
         Validate Endpoint-
-        A simple API endpoint for frontend to check if a token is valid or not
+        A simple API endpoint for frontend to check if a token is valid or not. Will return 200 and 'True'
+        or 400 Response. 
         
         POST requests need-
         Header:
@@ -355,6 +358,8 @@ class CustomApplicationRegistration(ApplicationRegistration):
             fields=('name', 'client_id', 'client_secret', 'client_type',
                     'authorization_grant_type', 'redirect_uris', 'persistent')
         )
+    template_name = "custom_application_registration.html"
+
 
 class CustomApplicationUpdate(ApplicationUpdate):
     def get_form_class(self):
@@ -366,9 +371,14 @@ class CustomApplicationUpdate(ApplicationUpdate):
             fields=('name', 'client_id', 'client_secret', 'client_type',
                     'authorization_grant_type', 'redirect_uris', 'persistent')
         )
+    template_name= "custom_application_form.html"
+
 
 class CustomApplicationDetail(ApplicationDetail):
     """
     Points the ApplicationDetail page to custom html that includes Persistent field
     """
     template_name = "custom_application_detail.html"
+
+class CustomApplicationList(ApplicationList):
+    template_name = "custom_application_list.html"

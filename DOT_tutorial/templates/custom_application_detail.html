@@ -1,9 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
 {% extends "oauth2_provider/base.html" %}
 
 {% load i18n %}
+{% load static %}
+
 {% block content %}
     <div class="block-center">
+        <img src="{% static "geniuslogo.png" %}">
         <h3 class="block-center-heading">{{ application.name }}</h3>
+
 
         <ul class="unstyled">
             <li>

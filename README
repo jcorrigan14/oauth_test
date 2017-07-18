@@ -13,14 +13,25 @@ These steps must be completed to begin using the service.
 1) Go to /admin and login to the admin site (ask nicely for login info)
 2) While logged in as admin, go to /o/applications to create an application to be used with this
     Authorization Microservice. Be sure to select the following fields...
-        - Client type: Confidential
-        - Authorization grant type: Resource owner password-based
+        * Client type: Confidential
+        * Authorization grant type: Resource owner password-based
     IMPORTANT:
-     * If you are not logged in as admin you cannot access o/applications
-     * If you are creating a moblie application, check the "Mobile Application" flag to issue persistent
-       access tokens. If you are creating a web application, leave this unchecked.
+        * If you are not logged in as admin you cannot access o/applications
+        * Check the "Mobile Application" flag to issue persistent access tokens.
+          If you are creating a web application, leave this unchecked.
 3) Use /signup to create new Users
 4) Use /login to authenicate a User's credentials and issue an access token
+
+
+API ENDPOINTS
+
+/signup ---------- create a User and log them in
+/login ----------- login existing users
+/logout ---------- revoke tokens
+/refresh --------- refresh a token
+/valid ----------- check if a token is valid
+/us -------------- used to test a scope protected resource
+/o/applications -- create and manage applications
 
 
 TODO:

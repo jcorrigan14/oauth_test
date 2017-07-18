@@ -1,5 +1,7 @@
-from django.db import models
-from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
+from django.db import models, router
+from django.contrib.auth.models import Group, User
+from django.db.models.deletion import Collector
 
 from oauth2_provider.models import AbstractApplication, Application
 
@@ -30,4 +32,3 @@ class CustomApplication(AbstractApplication):
 
     def get_persistent(self):
         return self.persistent
-
