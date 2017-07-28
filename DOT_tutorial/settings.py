@@ -38,14 +38,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'DOT_tutorial',
     'oauth2_provider',
     'rest_framework',
     'guardian',
-    'DOT_tutorial',
     'rest_framework_docs',
     'corsheaders',
 
 ]
+
+AUTH_USER_MODEL = 'DOT_tutorial.GeniusUser'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -85,13 +87,19 @@ WSGI_APPLICATION = 'DOT_tutorial.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     },
+#
+# }
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    },
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -138,6 +146,11 @@ REST_FRAMEWORK = {
 
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+    ),
+    'TEST_REQUEST_RENDERER_CLASSES':(
+        'rest_framework.renderers.MultiPartRenderer',
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.TemplateHTMLRenderer',
     )
 }
 
@@ -167,3 +180,4 @@ AUTHENTICATION_BACKENDS = {
     'django.contrib.auth.backends.ModelBackend', # this is default (TODO: Not sure if we need this?)
     'guardian.backends.ObjectPermissionBackend',
 }
+
