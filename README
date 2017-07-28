@@ -34,6 +34,5 @@ API ENDPOINTS
 /o/applications -- create and manage applications
 
 
-TODO:
-A bad 'app_name' passed in the payload throws a 500 error. Should we handle this in a try/catch,
-or expect that devs will pass properly
+Also important:
+We tried to implement automated tests into this Auth Microservice, but that proved difficult.
